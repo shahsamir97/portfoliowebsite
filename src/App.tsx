@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Github, 
   Linkedin, 
@@ -14,12 +14,15 @@ import {
   X,
   Smartphone,
   Globe,
-  Bug,
-  Layout,
+  Cpu,
   Layers,
-  Cpu
+  Zap,
+  Bot,
+  Terminal,
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { Link as ScrollLink } from 'react-scroll';
 import { cn } from './lib/utils';
 import profilePic from './md_shah_samir_picture.jpg';
@@ -28,25 +31,32 @@ import profilePic from './md_shah_samir_picture.jpg';
 
 const SERVICES = [
   {
-    title: "Hourly Development",
+    title: "AI-Powered Mobile Apps",
     price: "€35/hr",
-    description: "Flexible development support for your existing projects or new features.",
-    icon: <Code2 className="w-6 h-6" />,
-    features: ["App development from scratch", "Feature implementation", "Bug fixing & optimization"]
+    description: "Developing intelligent mobile applications with integrated AI features like LLMs, computer vision, and predictive analytics.",
+    icon: <Bot className="w-6 h-6" />,
+    features: ["Android & iOS development", "Gemini/OpenAI Integration", "On-device AI models"]
   },
   {
-    title: "Consultation",
+    title: "AI-Powered Web Solutions",
+    price: "€35/hr",
+    description: "Building modern, responsive websites and web apps enhanced with AI-driven user experiences and automation.",
+    icon: <Globe className="w-6 h-6" />,
+    features: ["React/Next.js development", "AI Content Generation", "Intelligent Search & Chat"]
+  },
+  {
+    title: "Technical Consultation",
     price: "€20/hr",
-    description: "Expert advice on mobile architecture, tech stack, and project planning.",
-    icon: <MessageSquare className="w-6 h-6" />,
-    features: ["Technical feasibility analysis", "Architecture review", "Performance optimization strategy"]
+    description: "Strategic advice on AI implementation, mobile architecture, and scaling your technical infrastructure.",
+    icon: <Terminal className="w-6 h-6" />,
+    features: ["AI Strategy & Roadmap", "Architecture Review", "Performance Optimization"]
   },
   {
-    title: "Startup MVP Package",
-    price: "Custom Quote",
-    description: "End-to-end development with my remote team of expert developers.",
+    title: "Startup MVP (Team)",
+    price: "Custom",
+    description: "Complete end-to-end development with my remote team of expert developers for full-scale startup products.",
     icon: <Rocket className="w-6 h-6" />,
-    features: ["Full-cycle development", "Remote expert team", "Scalable architecture"]
+    features: ["Full-cycle development", "Remote expert team", "Scalable MVP to Production"]
   }
 ];
 
@@ -68,28 +78,28 @@ const PROCESS_STEPS = [
 const PROJECTS = [
   {
     title: "Make My Meal",
-    description: "AI-powered cooking assistant that generates recipes from food photos using Gemini API.",
-    tags: ["Kotlin", "Jetpack Compose", "Gemini API"],
+    description: "AI-powered cooking assistant that generates recipes from food photos using Gemini API. Built for the Gemini API Developer competition.",
+    tags: ["Kotlin", "Jetpack Compose", "Gemini API", "AI"],
     link: "https://github.com/shahsamir97",
     type: "AI / Mobile"
   },
   {
     title: "E-Shop",
-    description: "Full-featured e-commerce Android app with merchant and customer portals.",
+    description: "Full-featured e-commerce Android app with merchant and customer portals, real-time tracking, and analytics.",
     tags: ["Kotlin", "ConstraintLayout", "FCM", "Glide"],
     link: "https://github.com/shahsamir97",
     type: "E-Commerce"
   },
   {
     title: "IELTS 360",
-    description: "Band score calculator with Firebase integration for progress tracking.",
+    description: "Band score calculator with Firebase integration for progress tracking. Used by thousands of students.",
     tags: ["Kotlin", "Java", "Firebase"],
     link: "https://play.google.com/store/apps/details?id=com.shahsamir.ielts360",
     type: "Education"
   },
   {
     title: "Mood Today",
-    description: "Mood-check quiz app using Gemini API for analysis and BLoC for state management.",
+    description: "Mood-check quiz app using Gemini API for analysis and BLoC for state management. Supports localization.",
     tags: ["Flutter", "Dart", "BLoC", "Gemini API"],
     link: "https://github.com/shahsamir97",
     type: "AI / Flutter"
@@ -100,18 +110,28 @@ const SKILLS = {
   "Mobile": ["Kotlin", "Jetpack Compose", "Flutter", "Dart", "Android SDK", "Android TV"],
   "Architecture": ["MVVM", "MVI", "Clean Architecture", "Modularization", "Hilt"],
   "Tools": ["Git", "CI/CD", "Fastlane", "GitHub Actions", "Jira", "Figma"],
-  "AI": ["Gemini API", "Prompt Engineering", "Claude", "GitHub Copilot"]
+  "AI & Future": ["Gemini API", "LLM Integration", "Prompt Engineering", "Claude", "Cursor"]
 };
 
 // --- Components ---
 
-const SectionHeading = ({ children, subtitle }: { children: React.ReactNode, subtitle?: string }) => (
-  <div className="mb-12 text-center">
+const SectionHeading = ({ children, subtitle, icon: Icon }: { children: React.ReactNode, subtitle?: string, icon?: any }) => (
+  <div className="mb-16 text-center relative">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-4 border border-cyan-500/20"
+    >
+      {Icon && <Icon className="w-4 h-4" />}
+      {children}
+    </motion.div>
     <motion.h2 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="text-3xl md:text-4xl font-bold text-slate-900 mb-4"
+      transition={{ delay: 0.1 }}
+      className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight"
     >
       {children}
     </motion.h2>
@@ -120,19 +140,24 @@ const SectionHeading = ({ children, subtitle }: { children: React.ReactNode, sub
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ delay: 0.1 }}
-        className="text-slate-600 max-w-2xl mx-auto"
+        transition={{ delay: 0.2 }}
+        className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed"
       >
         {subtitle}
       </motion.p>
     )}
-    <div className="w-20 h-1.5 bg-blue-600 mx-auto mt-6 rounded-full" />
   </div>
+);
+
+const GlowingOrb = ({ className }: { className?: string }) => (
+  <div className={cn("absolute rounded-full blur-[100px] opacity-20 glow-pulse", className)} />
 );
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.2]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -141,26 +166,37 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-[#030712] text-slate-300 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* Background Elements */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-grid opacity-20" />
+        <div className="absolute inset-0 bg-mesh" />
+        <GlowingOrb className="top-[-10%] left-[-10%] w-[500px] h-[500px] bg-cyan-500" />
+        <GlowingOrb className="bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-500" />
+      </div>
+
       {/* Navigation */}
       <nav className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-300 px-6 py-4",
-        scrolled ? "bg-white/80 backdrop-blur-md shadow-sm" : "bg-transparent"
+        "fixed top-0 w-full z-50 transition-all duration-500 px-6 py-4",
+        scrolled ? "bg-[#030712]/80 backdrop-blur-xl border-b border-white/5 py-3" : "bg-transparent"
       )}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <ScrollLink to="hero" smooth={true} className="text-xl font-bold cursor-pointer tracking-tighter text-blue-600">
-            SAMIR<span className="text-slate-900">.DEV</span>
+          <ScrollLink to="hero" smooth={true} className="text-2xl font-bold cursor-pointer tracking-tighter flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
+              <Zap className="w-6 h-6" />
+            </div>
+            <span className="text-white">SAMIR<span className="text-cyan-500">.AI</span></span>
           </ScrollLink>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-10">
             {['Services', 'Process', 'Portfolio', 'Skills'].map((item) => (
               <ScrollLink
                 key={item}
                 to={item.toLowerCase()}
                 smooth={true}
                 offset={-80}
-                className="text-sm font-medium text-slate-600 hover:text-blue-600 cursor-pointer transition-colors"
+                className="text-sm font-bold text-slate-400 hover:text-cyan-400 cursor-pointer transition-all uppercase tracking-widest"
               >
                 {item}
               </ScrollLink>
@@ -169,14 +205,15 @@ export default function App() {
               href="https://calendar.app.google/pqruhwe5fFHMFWR9A" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+              className="relative group overflow-hidden bg-cyan-500 text-white px-6 py-3 rounded-lg text-sm font-bold hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
             >
-              Book a Meeting
+              <span className="relative z-10">BOOK CONSULTATION</span>
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
             </a>
           </div>
 
           {/* Mobile Toggle */}
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <button className="md:hidden p-2 text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X /> : <Menu />}
           </button>
         </div>
@@ -186,12 +223,12 @@ export default function App() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-white pt-24 px-6 md:hidden"
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            className="fixed inset-0 z-40 bg-[#030712] pt-24 px-6 md:hidden"
           >
-            <div className="flex flex-col gap-6 text-center">
+            <div className="flex flex-col gap-8 text-left">
               {['Services', 'Process', 'Portfolio', 'Skills'].map((item) => (
                 <ScrollLink
                   key={item}
@@ -199,16 +236,16 @@ export default function App() {
                   smooth={true}
                   offset={-80}
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-2xl font-bold text-slate-900"
+                  className="text-4xl font-bold text-white tracking-tighter hover:text-cyan-400 transition-colors"
                 >
                   {item}
                 </ScrollLink>
               ))}
               <a 
                 href="https://calendar.app.google/pqruhwe5fFHMFWR9A" 
-                className="bg-blue-600 text-white py-4 rounded-xl text-lg font-bold"
+                className="bg-cyan-500 text-white py-5 rounded-2xl text-xl font-bold text-center"
               >
-                Book a Meeting
+                BOOK CONSULTATION
               </a>
             </div>
           </motion.div>
@@ -216,42 +253,45 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section id="hero" className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-400 rounded-full blur-3xl animate-pulse delay-1000" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <section id="hero" className="relative pt-40 pb-24 md:pt-56 md:pb-40 overflow-hidden z-10">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <span className="inline-block px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-bold mb-6">
-              Available for new projects
-            </span>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-6">
-              Building Scalable <br />
-              <span className="text-blue-600">Mobile Experiences</span>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-8 border border-cyan-500/20"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI-Powered Mobile & Web Engineer
+            </motion.div>
+            <h1 className="text-6xl md:text-8xl font-bold text-white leading-[0.9] mb-8 tracking-tighter">
+              CRAFTING <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
+                INTELLIGENT
+              </span> <br />
+              SYSTEMS.
             </h1>
-            <p className="text-lg md:text-xl text-slate-600 mb-8 max-w-xl leading-relaxed">
-              Hi, I'm <span className="font-bold text-slate-900">Mohammad Shah Samir</span>. 
-              A results-driven Android & Full-stack Engineer with 4+ years of experience delivering production-ready features for 1M+ users.
+            <p className="text-xl text-slate-400 mb-10 max-w-xl leading-relaxed font-light">
+              I specialize in building <span className="text-white font-medium">AI-powered mobile apps and websites</span> that scale. From requirement analysis to production-ready MVPs, I bring your vision to life with precision.
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-6">
               <ScrollLink 
                 to="services" 
                 smooth={true} 
-                className="bg-slate-900 text-white px-8 py-4 rounded-full font-bold hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-2"
+                className="group relative bg-white text-black px-10 py-5 rounded-xl font-bold hover:bg-cyan-400 hover:text-white transition-all cursor-pointer flex items-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
               >
-                View Services <ArrowRight className="w-5 h-5" />
+                EXPLORE SERVICES <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </ScrollLink>
-              <div className="flex items-center gap-3">
-                <a href="https://github.com/shahsamir97" target="_blank" className="p-3 bg-white border border-slate-200 rounded-full hover:border-blue-600 hover:text-blue-600 transition-all">
+              <div className="flex items-center gap-4">
+                <a href="https://github.com/shahsamir97" target="_blank" className="p-4 glass rounded-xl hover:text-cyan-400 hover:border-cyan-500/50 transition-all">
                   <Github className="w-6 h-6" />
                 </a>
-                <a href="https://www.linkedin.com/in/md-shah-samir-83639b54/" target="_blank" className="p-3 bg-white border border-slate-200 rounded-full hover:border-blue-600 hover:text-blue-600 transition-all">
+                <a href="https://www.linkedin.com/in/md-shah-samir-83639b54/" target="_blank" className="p-4 glass rounded-xl hover:text-cyan-400 hover:border-cyan-500/50 transition-all">
                   <Linkedin className="w-6 h-6" />
                 </a>
               </div>
@@ -259,47 +299,67 @@ export default function App() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative"
+            initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+            className="relative group max-w-[420px] mx-auto lg:ml-auto lg:mr-0 w-full"
           >
-            <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl relative z-10 border-8 border-white">
-              <img 
-                src={profilePic}
-                alt="Mohammad Shah Samir" 
-                className="w-full h-full object-cover object-top"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            {/* Decorative elements */}
-            <div className="absolute -top-6 -right-6 w-32 h-32 bg-blue-100 rounded-full -z-10" />
-            <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-indigo-50 rounded-3xl -z-10 rotate-12" />
-            
-            {/* Floating Stats */}
-            <div className="absolute top-10 -left-10 bg-white p-4 rounded-2xl shadow-xl z-20 hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                  <CheckCircle2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Experience</p>
-                  <p className="text-lg font-bold">4+ Years</p>
-                </div>
+            <div className="relative z-10 aspect-[4/5] rounded-[2rem] overflow-hidden glass border-2 border-white/10 p-2">
+              <div className="w-full h-full rounded-[1.5rem] overflow-hidden relative">
+                <img 
+                  src={profilePic}
+                  alt="Mohammad Shah Samir" 
+                  className="w-full h-full object-cover object-top grayscale group-hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-transparent to-transparent opacity-60" />
               </div>
             </div>
+            
+            {/* Floating Elements */}
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-10 -right-10 glass p-6 rounded-2xl z-20 border-cyan-500/30"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400">
+                  <Cpu className="w-7 h-7" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-cyan-400 font-black uppercase tracking-[0.2em]">Tech Stack</p>
+                  <p className="text-lg font-bold text-white">AI & Mobile</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              animate={{ y: [0, 20, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-10 -left-10 glass p-6 rounded-2xl z-20 border-purple-500/30"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400">
+                  <Rocket className="w-7 h-7" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-purple-400 font-black uppercase tracking-[0.2em]">Success</p>
+                  <p className="text-lg font-bold text-white">1M+ Users</p>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-24 bg-white">
+      <section id="services" className="py-32 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading subtitle="Flexible engagement models tailored to your business needs.">
-            Services & Pricing
+          <SectionHeading subtitle="Specialized engineering for the next generation of digital products." icon={Zap}>
+            Expert Solutions
           </SectionHeading>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {SERVICES.map((service, idx) => (
               <motion.div
                 key={idx}
@@ -307,18 +367,19 @@ export default function App() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="p-8 rounded-3xl border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-xl hover:border-blue-100 transition-all group"
+                className="group p-8 rounded-3xl glass glass-hover transition-all relative overflow-hidden"
               >
-                <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full -mr-12 -mt-12 group-hover:bg-cyan-500/10 transition-colors" />
+                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-500">
                   {service.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-2">{service.title}</h3>
-                <div className="text-3xl font-black text-blue-600 mb-4">{service.price}</div>
-                <p className="text-slate-600 mb-6 leading-relaxed">{service.description}</p>
-                <ul className="space-y-3">
+                <h3 className="text-xl font-bold text-white mb-2">{service.title}</h3>
+                <div className="text-2xl font-black text-cyan-400 mb-4">{service.price}</div>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">{service.description}</p>
+                <ul className="space-y-4">
                   {service.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                    <li key={i} className="flex items-center gap-3 text-xs font-medium text-slate-300">
+                      <ChevronRight className="w-4 h-4 text-cyan-500" />
                       {f}
                     </li>
                   ))}
@@ -330,49 +391,47 @@ export default function App() {
       </section>
 
       {/* Process Section */}
-      <section id="process" className="py-24 bg-slate-900 text-white overflow-hidden">
+      <section id="process" className="py-32 bg-white/[0.02] relative z-10 border-y border-white/5">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-16 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">The Startup Development Process</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">
-              A battle-tested workflow to take your idea from concept to a production-ready MVP.
-            </p>
-          </div>
+          <SectionHeading subtitle="A systematic, transparent approach to building complex software." icon={Terminal}>
+            The Development Lifecycle
+          </SectionHeading>
 
-          <div className="relative">
-            {/* Connection Line */}
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-800 hidden md:block" />
-
-            <div className="grid gap-12 relative">
-              {PROCESS_STEPS.map((step, idx) => (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="flex items-start gap-6 md:gap-12 group"
-                >
-                  <div className="relative z-10">
-                    <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center text-xl font-bold border border-slate-700 group-hover:border-blue-500 group-hover:text-blue-500 transition-all">
-                      {idx + 1}
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <h3 className="text-xl font-bold mb-1 group-hover:text-blue-400 transition-colors">{step.title}</h3>
-                    <p className="text-slate-400">{step.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 relative">
+            {/* Connection Lines (Desktop) */}
+            <div className="absolute inset-0 hidden lg:block pointer-events-none">
+              <svg className="w-full h-full opacity-10" viewBox="0 0 1000 800">
+                <path d="M150,100 L850,100 L850,400 L150,400 L150,700 L850,700" fill="none" stroke="white" strokeWidth="2" strokeDasharray="10,10" />
+              </svg>
             </div>
+
+            {PROCESS_STEPS.map((step, idx) => (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.05 }}
+                className="relative group"
+              >
+                <div className="flex items-center gap-6 mb-4">
+                  <div className="w-12 h-12 rounded-xl glass flex items-center justify-center text-lg font-black text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-500">
+                    {String(idx + 1).padStart(2, '0')}
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">{step.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{step.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Portfolio Section */}
-      <section id="portfolio" className="py-24 bg-white">
+      <section id="portfolio" className="py-32 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading subtitle="A selection of my recent work in mobile and AI.">
+          <SectionHeading subtitle="Showcasing innovation in AI integration and mobile architecture." icon={Layers}>
             Featured Projects
           </SectionHeading>
 
@@ -380,76 +439,69 @@ export default function App() {
             {PROJECTS.map((project, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="group relative bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl transition-all"
+                className="group relative glass rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-cyan-500/30 transition-all duration-500"
               >
-                <div className="p-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {project.type}
-                    </span>
-                    <a href={project.link} target="_blank" className="text-slate-400 hover:text-blue-600">
-                      <ExternalLink className="w-6 h-6" />
+                <div className="p-10">
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="flex gap-2">
+                      <span className="px-4 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-500/20">
+                        {project.type}
+                      </span>
+                    </div>
+                    <a href={project.link} target="_blank" className="p-3 glass rounded-full text-slate-400 hover:text-cyan-400 hover:scale-110 transition-all">
+                      <ExternalLink className="w-5 h-5" />
                     </a>
                   </div>
-                  <h3 className="text-2xl font-bold mb-3 group-hover:text-blue-600 transition-colors">{project.title}</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">{project.description}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors tracking-tight">{project.title}</h3>
+                  <p className="text-slate-400 mb-8 leading-relaxed text-lg font-light">{project.description}</p>
+                  <div className="flex flex-wrap gap-3">
                     {project.tags.map((tag, i) => (
-                      <span key={i} className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-500">
+                      <span key={i} className="px-4 py-2 bg-white/5 rounded-xl text-xs font-bold text-slate-400 border border-white/5">
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
-                <div className="h-2 bg-blue-600 w-0 group-hover:w-full transition-all duration-500" />
+                <div className="h-1.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 w-0 group-hover:w-full transition-all duration-700" />
               </motion.div>
             ))}
-          </div>
-          
-          <div className="mt-16 text-center">
-            <a 
-              href="https://github.com/shahsamir97" 
-              target="_blank"
-              className="inline-flex items-center gap-2 text-slate-900 font-bold hover:text-blue-600 transition-colors"
-            >
-              View more on GitHub <ArrowRight className="w-5 h-5" />
-            </a>
           </div>
         </div>
       </section>
 
       {/* Skills Section */}
-      <section id="skills" className="py-24 bg-slate-50">
+      <section id="skills" className="py-32 relative z-10 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading subtitle="The technologies and methodologies I use to build high-quality software.">
-            Technical Expertise
+          <SectionHeading subtitle="A comprehensive toolkit for building high-performance digital solutions." icon={Cpu}>
+            Technical Arsenal
           </SectionHeading>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Object.entries(SKILLS).map(([category, items], idx) => (
               <motion.div
                 key={category}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100"
+                className="glass p-10 rounded-[2rem] border border-white/5 hover:border-cyan-500/20 transition-all"
               >
-                <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                  {category === "Mobile" && <Smartphone className="w-5 h-5 text-blue-600" />}
-                  {category === "Architecture" && <Layers className="w-5 h-5 text-blue-600" />}
-                  {category === "Tools" && <Cpu className="w-5 h-5 text-blue-600" />}
-                  {category === "AI" && <Rocket className="w-5 h-5 text-blue-600" />}
-                  {category}
-                </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400 mb-8">
+                  {category === "Mobile" && <Smartphone className="w-6 h-6" />}
+                  {category === "Architecture" && <Layers className="w-6 h-6" />}
+                  {category === "Tools" && <Code2 className="w-6 h-6" />}
+                  {category === "AI & Future" && <Sparkles className="w-6 h-6" />}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-6 tracking-tight">{category}</h3>
+                <div className="flex flex-col gap-3">
                   {items.map((item) => (
-                    <span key={item} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-sm font-medium border border-slate-100">
-                      {item}
-                    </span>
+                    <div key={item} className="flex items-center gap-3 group">
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 group-hover:scale-150 transition-transform" />
+                      <span className="text-slate-400 group-hover:text-white transition-colors text-sm font-medium">{item}</span>
+                    </div>
                   ))}
                 </div>
               </motion.div>
@@ -459,52 +511,70 @@ export default function App() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-blue-600 text-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border-[40px] border-white rounded-full" />
-        </div>
-        
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8">Ready to bring your project to life?</h2>
-          <p className="text-xl text-blue-100 mb-12 leading-relaxed">
-            Whether you need a quick bug fix, a new feature, or a complete MVP for your startup, I'm here to help you build something amazing.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a 
-              href="https://calendar.app.google/pqruhwe5fFHMFWR9A" 
-              target="_blank"
-              className="bg-white text-blue-600 px-10 py-5 rounded-full font-bold text-lg hover:bg-blue-50 transition-all flex items-center justify-center gap-2 shadow-xl"
-            >
-              <Calendar className="w-6 h-6" /> Book a Free Consultation
-            </a>
-            <a 
-              href="mailto:mdshahsamir@gmail.com" 
-              className="bg-blue-700 text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-blue-800 transition-all flex items-center justify-center gap-2"
-            >
-              <Mail className="w-6 h-6" /> Send an Email
-            </a>
-          </div>
+      <section className="py-40 relative z-10 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative glass p-16 md:p-24 rounded-[3rem] text-center border border-white/10 overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-500/10 via-transparent to-purple-500/10 opacity-50" />
+            <div className="relative z-10">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tighter leading-tight">
+                LET'S BUILD THE <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">FUTURE</span> TOGETHER.
+              </h2>
+              <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
+                Whether you're a startup looking for an MVP or an enterprise needing AI integration, I'm ready to engineer your success.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                <a 
+                  href="https://calendar.app.google/pqruhwe5fFHMFWR9A" 
+                  target="_blank"
+                  className="bg-cyan-500 text-white px-12 py-6 rounded-2xl font-black text-lg hover:bg-cyan-400 transition-all flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(6,182,212,0.3)]"
+                >
+                  <Calendar className="w-6 h-6" /> BOOK A MEETING
+                </a>
+                <a 
+                  href="mailto:mdshahsamir@gmail.com" 
+                  className="glass text-white px-12 py-6 rounded-2xl font-black text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                >
+                  <Mail className="w-6 h-6" /> SEND EMAIL
+                </a>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-white border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div>
-            <p className="text-xl font-bold text-blue-600">SAMIR<span className="text-slate-900">.DEV</span></p>
-            <p className="text-slate-500 text-sm mt-2">© 2026 Mohammad Shah Samir. All rights reserved.</p>
+      <footer className="py-20 relative z-10 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="text-center md:text-left">
+            <ScrollLink to="hero" smooth={true} className="text-3xl font-bold cursor-pointer tracking-tighter text-white">
+              SAMIR<span className="text-cyan-500">.AI</span>
+            </ScrollLink>
+            <p className="text-slate-500 text-sm mt-4 font-medium tracking-widest uppercase">
+              Engineering Excellence © 2026
+            </p>
           </div>
           
-          <div className="flex items-center gap-6">
-            <a href="https://github.com/shahsamir97" target="_blank" className="text-slate-400 hover:text-slate-900 transition-colors">
-              <Github className="w-6 h-6" />
-            </a>
-            <a href="https://www.linkedin.com/in/md-shah-samir-83639b54/" target="_blank" className="text-slate-400 hover:text-slate-900 transition-colors">
-              <Linkedin className="w-6 h-6" />
-            </a>
-            <a href="mailto:mdshahsamir@gmail.com" className="text-slate-400 hover:text-slate-900 transition-colors">
-              <Mail className="w-6 h-6" />
-            </a>
+          <div className="flex items-center gap-8">
+            {[
+              { icon: Github, link: "https://github.com/shahsamir97" },
+              { icon: Linkedin, link: "https://www.linkedin.com/in/md-shah-samir-83639b54/" },
+              { icon: Mail, link: "mailto:mdshahsamir@gmail.com" }
+            ].map((social, i) => (
+              <a 
+                key={i} 
+                href={social.link} 
+                target="_blank" 
+                className="text-slate-500 hover:text-cyan-400 transition-all hover:scale-125"
+              >
+                <social.icon className="w-7 h-7" />
+              </a>
+            ))}
           </div>
         </div>
       </footer>
