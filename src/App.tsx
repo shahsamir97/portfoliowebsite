@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Link as ScrollLink } from 'react-scroll';
 import { cn } from './lib/utils';
+import profilePic from './md_shah_samir_picture.jpg';
 
 // --- Constants & Data ---
 
@@ -265,9 +266,9 @@ export default function App() {
           >
             <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl relative z-10 border-8 border-white">
               <img 
-                src="https://picsum.photos/seed/samir/800/800" // Placeholder - user should replace with his photo
+                src={profilePic}
                 alt="Mohammad Shah Samir" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
                 referrerPolicy="no-referrer"
               />
             </div>
