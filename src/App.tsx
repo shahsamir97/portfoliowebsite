@@ -22,7 +22,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Link as ScrollLink } from 'react-scroll';
 import { cn } from './lib/utils';
-import profilePic from './md_shah_samir_picture.jpg';
+import profilePic from './md_shah_samir_picture.webp';
 
 // --- Constants & Data ---
 
